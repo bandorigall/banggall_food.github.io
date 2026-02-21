@@ -3,6 +3,7 @@
     <html lang="ko">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>방붕 맛집 지도</title>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -32,7 +33,6 @@
             #map { flex: 1; }
             footer { text-align: center; padding: 10px; background-color: #333; color: #FFF; font-size: 12px; }
 
-            /* 모바일 반응형 CSS 추가 */
             @media (max-width: 768px) {
                 #main-container { flex-direction: column; }
                 #sidebar { width: 100%; min-width: 100%; flex: 1; order: 2; border-right: none; }

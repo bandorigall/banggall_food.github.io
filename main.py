@@ -36,6 +36,7 @@ def generate_html(csv_file, output_file):
     <html lang="ko">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>방붕 맛집 지도</title>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -65,7 +66,6 @@ def generate_html(csv_file, output_file):
             #map {{ flex: 1; }}
             footer {{ text-align: center; padding: 10px; background-color: #333; color: #FFF; font-size: 12px; }}
 
-            /* 모바일 반응형 CSS 추가 */
             @media (max-width: 768px) {{
                 #main-container {{ flex-direction: column; }}
                 #sidebar {{ width: 100%; min-width: 100%; flex: 1; order: 2; border-right: none; }}
@@ -221,7 +221,7 @@ def generate_html(csv_file, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-    print(f"작업 완료! {{output_file}} 파일 확장자 저장 완료!")
+    print(f"작업 완료! {output_file} 파일 저장 완료!")
 
 if __name__ == "__main__":
     generate_html('data.csv', 'index.html')
