@@ -5,42 +5,78 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>방붕 맛집 지도</title>
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        
         <style>
-            body { margin: 0; font-family: 'Malgun Gothic', sans-serif; background-color: #FFFDF9; color: #4A3F35; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-            header { background-color: #FFB347; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; }
-            h1 { margin: 0; font-size: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-            .dc-link { color: white; text-decoration: none; font-weight: bold; background-color: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; transition: background 0.2s; font-size: 12px; }
+            /* 기본 스타일 */
+            body, html { margin: 0; padding: 0; height: 100%; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: #FFFDF9; color: #4A3F35; overflow: hidden; }
+            body { display: flex; flex-direction: column; }
             
-            #main-container { display: flex; flex: 1; overflow: hidden; }
-            #sidebar { width: 450px; min-width: 450px; background-color: #FAFAFA; border-right: 1px solid #E0E0E0; display: flex; flex-direction: column; overflow: hidden; }
-            #filters { padding: 12px; border-bottom: 1px solid #E0E0E0; background-color: white; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
-            .filter-btn { padding: 6px 12px; border: none; border-radius: 15px; background-color: #EEEEEE; color: #555; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 13px; }
-            .filter-btn.active { background-color: #FFB347; color: white; }
+            /* 헤더 */
+            header { background-color: #FF9F43; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 1000; }
+            h1 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+            .dc-link { color: white; text-decoration: none; font-weight: 600; background-color: rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 6px; transition: background 0.2s; font-size: 0.8rem; white-space: nowrap; }
+            .dc-link:hover { background-color: rgba(255,255,255,0.3); }
             
-            #list-container { flex: 1; overflow-y: auto; padding: 10px; -webkit-overflow-scrolling: touch; }
-            .list-item { background: white; border: 1px solid #E8E8E8; padding: 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; }
-            .list-item.active { border: 2px solid #FFB347; background-color: #FFF9F0; }
-            .item-name { font-size: 17px; font-weight: bold; margin-bottom: 4px; color: #D35400; }
-            .item-note { font-size: 13px; color: #7F8C8D; margin-bottom: 10px; }
+            /* 메인 컨테이너 (지도 + 사이드바) */
+            #main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
             
-            .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
-            .btn { padding: 4px 8px; font-size: 11px; text-decoration: none; color: white; border-radius: 4px; font-weight: bold; }
+            /* 사이드바 (리스트 영역) */
+            #sidebar { width: 420px; min-width: 420px; background-color: #FAFAFA; border-right: 1px solid #E0E0E0; display: flex; flex-direction: column; overflow: hidden; z-index: 900; }
+            
+            /* 필터 버튼 영역 */
+            #filters { padding: 10px; border-bottom: 1px solid #E0E0E0; background-color: #fff; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+            .filter-btn { padding: 6px 12px; border: 1px solid #ddd; border-radius: 20px; background-color: #f8f8f8; color: #666; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.85rem; }
+            .filter-btn:hover { background-color: #eee; }
+            .filter-btn.active { background-color: #FF9F43; color: white; border-color: #FF9F43; box-shadow: 0 2px 4px rgba(255, 159, 67, 0.3); }
+            
+            /* 리스트 컨테이너 (스크롤 영역) */
+            #list-container { flex: 1; overflow-y: auto; padding: 10px; -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */ background-color: #f4f4f4; }
+            
+            /* 개별 리스트 아이템 */
+            .list-item { background: white; border: 1px solid #E8E8E8; padding: 15px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+            .list-item:active { transform: scale(0.99); }
+            .list-item.active { border: 2px solid #FF9F43; background-color: #FFF8F0; box-shadow: 0 4px 8px rgba(255, 159, 67, 0.15); }
+            .item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+            .item-name { font-size: 1.1rem; font-weight: 700; color: #E67E22; }
+            .item-area-badge { font-size: 0.75rem; background-color: #eee; padding: 3px 6px; border-radius: 4px; color: #666; }
+            .item-note { font-size: 0.9rem; color: #666; margin-bottom: 12px; line-height: 1.4; word-break: break-word; }
+            
+            /* 버튼 그룹 */
+            .btn-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+            .btn { padding: 6px 10px; font-size: 0.8rem; text-decoration: none; color: white; border-radius: 5px; font-weight: 600; display: inline-flex; align-items: center; transition: opacity 0.2s; }
+            .btn:hover { opacity: 0.9; }
             .btn-google { background-color: #4285F4; }
             .btn-naver { background-color: #03C75A; }
             .btn-kakao { background-color: #FEE500; color: #000; }
             
-            #map { flex: 1; z-index: 1; }
-            footer { text-align: center; padding: 8px; background-color: #333; color: #FFF; font-size: 11px; flex-shrink: 0; }
+            /* 지도 영역 */
+            #map { flex: 1; height: 100%; background-color: #f0f0f0; }
+            
+            /* 푸터 */
+            footer { text-align: center; padding: 8px; background-color: #34495e; color: #bdc3c7; font-size: 0.75rem; flex-shrink: 0; }
+            footer a { color: #bdc3c7; text-decoration: none; }
 
-            /* 모바일 반응형 핵심 수정 */
+            /* ========== 모바일 반응형 스타일 ========== */
             @media (max-width: 768px) {
-                #main-container { flex-direction: column; }
-                #map { width: 100%; height: 40vh; flex: none; order: 1; border-bottom: 2px solid #E0E0E0; }
-                #sidebar { width: 100%; min-width: 100%; height: 60vh; flex: 1; order: 2; border-right: none; }
-                h1 { font-size: 18px; }
-                .dc-link { font-size: 10px; padding: 4px 8px; }
+                body { height: auto; min-height: 100%; } /* 모바일에서 주소창 고려 */
+                h1 { font-size: 1.1rem; }
+                .dc-link { font-size: 0.75rem; padding: 5px 8px; }
+                header { padding: 10px; }
+                
+                #main-container { flex-direction: column; height: auto; flex: 1; }
+                
+                /* 모바일: 지도 상단 배치 */
+                #map { width: 100%; height: 45vh; min-height: 300px; flex: none; order: 1; border-bottom: 1px solid #ddd; position: sticky; top: 0; }
+                
+                /* 모바일: 사이드바 하단 배치 */
+                #sidebar { width: 100%; min-width: 100%; height: auto; flex: 1; order: 2; border-right: none; overflow: visible; }
+                #list-container { overflow-y: visible; height: auto; padding-bottom: 20px; } /* 모바일에서 스크롤 전체 사용 */
+                
+                /* 모바일: 팝업 스타일 조정 */
+                .leaflet-popup-content { margin: 10px; max-width: 260px; }
+                .leaflet-popup-tip-container { display: none; } /* 팁 숨겨서 공간 확보 */
             }
         </style>
     </head>
@@ -49,41 +85,68 @@
             <h1>방붕 맛집 지도</h1>
             <a href="https://gall.dcinside.com/mgallery/board/lists?id=bang_dream" target="_blank" class="dc-link">뱅드림 갤러리 가기</a>
         </header>
+        
         <div id="main-container">
             <div id="sidebar">
-                <div id="filters"></div>
-                <div id="list-container"></div>
+                <div id="filters">
+                    </div>
+                <div id="list-container">
+                    </div>
             </div>
+            
             <div id="map"></div>
         </div>
+        
         <footer>
-            made by Bangbung Kim
+            made by Bangbung Kim | <a href="https://gall.dcinside.com/mgallery/board/lists?id=bang_dream" target="_blank">DCInside BangDream Gallery</a>
         </footer>
 
         <script>
-            const data = [{"area": "서울", "name": "롯데리아", "google_map": "https://maps.app.goo.gl/HosPLur1cJ6X5sr78", "lat": 37.53654256543878, "lng": 127.09552764449447, "note": ""}, {"area": "대전", "name": "성심당", "google_map": "", "lat": null, "lng": null, "note": "\"빵 맛잇고 가성비잇음. 분점많음. 많음\""}, {"area": "대전", "name": "오문창순대국밥", "google_map": "https://maps.app.goo.gl/PCvbrhjFPmyQhEHF7", "lat": 36.35942813406155, "lng": 127.42659419709878, "note": "\"대전터미널 근처 위치\""}, {"area": "서울_홍대", "name": "카츠와", "google_map": "https://maps.app.goo.gl/8Ry2eJwm4zeVE7kYA", "lat": 37.55544969725542, "lng": 126.92701645481728, "note": "\"맛있던데\""}, {"area": "부산_서면", "name": "교자쇼푸", "google_map": "https://maps.app.goo.gl/igYC1Zm5Gx6tG6tT9", "lat": 35.15895161617535, "lng": 129.06351061054482, "note": "\"마파두부 맛있더라\""}, {"area": "요코하마", "name": "요시무라야", "google_map": "https://maps.app.goo.gl/cZjiQj1a2R85zEn68", "lat": 35.4631847045806, "lng": 139.6151070835739, "note": "\"아직 안가봄! 이에케라멘 총본산\""}, {"area": "부산_서면", "name": "국밥골목", "google_map": "https://maps.app.goo.gl/pUCAXzDCcvQ2JX3HA", "lat": 35.155868949482944, "lng": 129.05819858356253, "note": "\"서면시장 위치\""}, {"area": "서울_홍대", "name": "온정", "google_map": "https://maps.app.goo.gl/69G7NaKButZghqr48", "lat": 37.56282294562447, "lng": 126.9255017529638, "note": "\"(돈부리 사케동 등) / 가성비 그럭저럭(12"}, {"area": "대전", "name": "농민순대", "google_map": "https://maps.app.goo.gl/C5bfRJwUvn8vmD2R8", "lat": 36.31927755238408, "lng": 127.43183373942456, "note": "\"6000원이라는 싼마이 가격에 맛있는 순대국밥집임. 대전에서 유명하긴한데 솔직히 그정돈가임 난\""}, {"area": "대전", "name": "태평소국밥", "google_map": "태평소국밥", "lat": 36.33396842892469, "lng": 127.39890683018695, "note": "\"소국밥 마시써요. 가격도 착함\""}, {"area": "대전", "name": "오씨칼국수", "google_map": "https://maps.app.goo.gl/RrJnE7n7dHZL3Aed6", "lat": 36.34217163851787, "lng": 127.42537937567727, "note": "\"\""}, {"area": "대전", "name": "태화장", "google_map": "https://maps.app.goo.gl/JdETEU8UMSAvxA5M8", "lat": 36.33396053024255, "lng": 127.42958650265949, "note": "\"\""}, {"area": "대전", "name": "요우란", "google_map": "https://maps.app.goo.gl/R8uw6fsHR6FpRtey7", "lat": 36.327020571322606, "lng": 127.41873019524347, "note": "\"\""}, {"area": "부산_서면", "name": "발해양꼬치", "google_map": "https://maps.app.goo.gl/3jQ7WuvsoNuHVq8A6", "lat": 35.15501482593996, "lng": 129.05710772774373, "note": "\"\""}, {"area": "부산_서면", "name": "본가밀면", "google_map": "https://maps.app.goo.gl/xgzMBaTJPGmqSEtS9", "lat": 35.15625859234756, "lng": 129.05867334308903, "note": "\"\""}, {"area": "부산_서면", "name": "스스키노", "google_map": "https://maps.app.goo.gl/18uH5ZHWkR9VGL3d9", "lat": 35.15762519107269, "lng": 129.06416857007125, "note": "\"\""}, {"area": "부산_서면", "name": "부부손칼국수", "google_map": "https://maps.app.goo.gl/ZwyVEqK1uu6WHoej8", "lat": 35.14883381522473, "lng": 129.06113506963243, "note": "\"서면 안 가고 완전 근처에서 먹고 싶다 하면 나쁘지 않음\""}, {"area": "요코하마", "name": "토리키조쿠", "google_map": "https://maps.app.goo.gl/7f2sJHoNCqAmbpEv5", "lat": 35.47099528696473, "lng": 139.62319912865485, "note": "\"\""}, {"area": "요코하마", "name": "바미얀", "google_map": "https://maps.app.goo.gl/PPawwd5PCCKmtemi9", "lat": 35.4630545457741, "lng": 139.6295046034867, "note": "\"\""}, {"area": "부산_서면", "name": "치킨버거클럽", "google_map": "https://maps.app.goo.gl/DREr5nbocBYdcPa78", "lat": 35.15273216442385, "lng": 129.0662586682172, "note": "\"서면cgv 나름 가까움\""}, {"area": "부산_서면", "name": "와일드캣브루잉", "google_map": "https://maps.app.goo.gl/xCFKvUpdzW49X49BA", "lat": 35.15097967434297, "lng": 129.05861819705353, "note": "\"우치아게 ㄱㄱ\""}, {"area": "부산_서면", "name": "커피샬롱루이", "google_map": "https://maps.app.goo.gl/4fnpG2i1jQHBzB6S8", "lat": 35.152307099003785, "lng": 129.06285048473558, "note": "\"홍차 마시는거 좋아하면 ㄱㄱ\""}, {"area": "부산_서면", "name": "복동이네오지상", "google_map": "https://maps.app.goo.gl/EzbTd4JtaVMX4n8VA", "lat": 35.160006799512516, "lng": 129.06151703938124, "note": "\"니보시라멘 맛있음. 좀 짭짤할 수 있고 웨이팅 있을 수 있음. 여기 니보시 향좀 세니깐 해산물 잘못먹으면 피해\""}, {"area": "대구", "name": "모루", "google_map": "https://maps.app.goo.gl/UwtfQsmiqy2h6SYh6", "lat": 35.87725027957315, "lng": 128.63053671357181, "note": "\"카이센동 스키야키 등 일본 정식. 가격대 있지만 맛 보장\""}, {"area": "대구", "name": "효목골막창", "google_map": "https://maps.app.goo.gl/cNUKbrEG4393AktH8", "lat": 35.876031661054, "lng": 128.63932056824413, "note": "\"20년 전통 맛집\""}, {"area": "서울_홍대", "name": "로쏘 1924", "google_map": "https://maps.app.goo.gl/ho7hfjq7hZyBqUe38", "lat": 37.554774693495574, "lng": 126.92165035296335, "note": "\"피자\""}, {"area": "요코하마", "name": "らーめんせんだい横浜駅西口店", "google_map": "https://maps.app.goo.gl/eJ2ezjv253CY2P97A", "lat": 35.467153820188, "lng": 139.61892546822884, "note": "\"요코하마역 서구점. 매장 좁고 많음\""}, {"area": "요코하마", "name": "花より、ハンバーグ本店", "google_map": "https://maps.app.goo.gl/QEqdj13XHtz92JxLA", "lat": 35.46839953553438, "lng": 139.62293675473774, "note": "\"나름 괜찮았음\""}, {"area": "서울_홍대", "name": "쿄라멘", "google_map": "https://maps.app.goo.gl/7nm71WaambAoP2cH9", "lat": 37.562543915823454, "lng": 126.92608852412735, "note": "\"가성비 ㅆㅅㅌㅊ 존나 맛있음. 주말 웨이팅 빡셈\""}, {"area": "요코하마", "name": "차이나타운", "google_map": "https://maps.app.goo.gl/rbnfVux2vMwZz1mR7", "lat": 35.44319316094814, "lng": 139.64413228357319, "note": "\"마파두부 샤오롱바오 맛도리. 향신료 향 강함"}, {"area": "대구", "name": "키라키라찜닭", "google_map": "https://maps.app.goo.gl/dHGUYBLvbT28yPs9A", "lat": 35.88202958503526, "lng": 128.58291009337293, "note": "\"CGV 근처 벚꽃길 동네 맛집. 가성비 좋음\""}, {"area": "대구", "name": "청양궁양꼬치", "google_map": "https://maps.app.goo.gl/oHWSCEVfudUrbCqR6", "lat": 35.881280722766704, "lng": 128.58202299708068, "note": "\"볶음밥 마파두부 꿔바로우 맛있음\""}, {"area": "대구", "name": "찬앤찬막창", "google_map": "https://maps.app.goo.gl/ATc1vsn2bamywVf18", "lat": 35.88775868620375, "lng": 128.57714842591716, "note": "\"유명한 막창집\""}, {"area": "대구", "name": "걸리버막창", "google_map": "https://maps.app.goo.gl/RzvThFxacSqE8Ep3A", "lat": 35.88667165713738, "lng": 128.5806714937436, "note": "\"유명한 막창집\""}, {"area": "대구", "name": "고굽남", "google_map": "https://maps.app.goo.gl/efHfZL7VPvRJUAcf7", "lat": 35.87538923873759, "lng": 128.58852587497444, "note": "\"고깃집\""}, {"area": "대구", "name": "만재네", "google_map": "https://maps.app.goo.gl/pnpUDRV57N4Wzop97", "lat": 35.869463290797576, "lng": 128.59224989522627, "note": "\"고깃집\""}, {"area": "대구", "name": "고성생고기", "google_map": "https://place.map.kakao.com/1459578727", "lat": 35.883696317198435, "lng": 128.5847664835896, "note": "\"뭉티기 먹을거면 추천\""}, {"area": "대구", "name": "만복국수집", "google_map": "https://maps.app.goo.gl/2k2PdoMKqMF15uWo6", "lat": 35.88616888160393, "lng": 128.585102497735, "note": "\"소주 한잔 땡기기 괜찮음\""}, {"area": "대구", "name": "선산곱창", "google_map": "https://maps.app.goo.gl/71evT7oVr988vTkQ7", "lat": 35.84228339116505, "lng": 128.53192667086256, "note": "\"\""}, {"area": "대구", "name": "자박갈비", "google_map": "https://maps.app.goo.gl/7bNQvfGE1uMx1k9a7", "lat": 35.8267065392697, "lng": 128.5217045943888, "note": "\"\""}, {"area": "대전", "name": "김화칼국수", "google_map": "https://maps.app.goo.gl/dD4542UPMw51JxpYA", "lat": 36.33221976391748, "lng": 127.43107472778787, "note": "\"\""}, {"area": "대전", "name": "개천식당", "google_map": "https://maps.app.goo.gl/fqDhrW4qedGTw6u7A", "lat": 36.32876037274542, "lng": 127.43154605291619, "note": "\"\""}, {"area": "대전", "name": "별난집", "google_map": "https://maps.app.goo.gl/cFg9BQzzjXYFbt1D9", "lat": 36.33110462351886, "lng": 127.43061023757119, "note": "\"\""}, {"area": "대전", "name": "진로집", "google_map": "https://maps.app.goo.gl/kyDYf8PcMBdoq92k7", "lat": 36.326042035875545, "lng": 127.42470348360625, "note": "\"\""}, {"area": "요코하마", "name": "シシリヤ", "google_map": "https://maps.app.goo.gl/WEPKUes2zSNrBQJTA", "lat": 35.44637230253761, "lng": 139.63921355288306, "note": "\"피자집. 마르게리타 추천\""}, {"area": "요코하마", "name": "伸喜", "google_map": "https://maps.app.goo.gl/diKYGYBwUmNnmMA89", "lat": 35.448208235494015, "lng": 139.6294384547369, "note": "\"야키토리\""}, {"area": "요코하마", "name": "アルペンジロー", "google_map": "https://maps.app.goo.gl/ypi5cakRMhMwSptE9", "lat": 35.43969760658018, "lng": 139.62855100870132, "note": "\"스프카레\""}, {"area": "요코하마", "name": "とんかつ 檍", "google_map": "https://maps.app.goo.gl/mUj2b2LXbwtH5Wmb6", "lat": 35.44898835687958, "lng": 139.6354817922334, "note": "\"돈카츠\""}, {"area": "요코하마", "name": "Kikuya Curry", "google_map": "https://maps.app.goo.gl/qukhxxetLxaABdVA8", "lat": 35.44866789498514, "lng": 139.62707284124585, "note": "\"카슈미르카레\""}, {"area": "부산_서면", "name": "기장손칼국수", "google_map": "https://maps.app.goo.gl/qU4xgwBcmFQ3qurm9", "lat": 35.155685024277545, "lng": 129.058342441235, "note": "\"\""}, {"area": "요코하마", "name": "레오나드", "google_map": "https://maps.app.goo.gl/dg7R9biiZxFtTC3i6", "lat": 35.4539904002934, "lng": 139.639182539392, "note": "\"도넛 간식. 하와이랑 요코하마에만 있음. 커스타드 필링 추천\""}, {"area": "서울", "name": "동서울칼국수", "google_map": "https://maps.app.goo.gl/TtXJ9FoVNVSJGJCG8", "lat": 37.5340293745322, "lng": 127.09132655481646, "note": "\"강변 도보 10분\""}, {"area": "대구", "name": "윤소인남산고단백장어죽집", "google_map": "https://maps.app.goo.gl/igGcA3aYknqLdz8R7", "lat": 35.877067512744304, "lng": 128.59560557086255, "note": "\"제육덮밥 6천원인데 왕돈까스 그릇에 담아줌. GOAT\""}, {"area": "요코하마", "name": "키친 조", "google_map": "https://maps.app.goo.gl/ZVgEQmRvxUd5r6RX8", "lat": 35.45116078875737, "lng": 139.63086035473722, "note": "\"나폴리탄 스파게티 치킨 커틀렛 토핑 추천\""}, {"area": "대전", "name": "후지산", "google_map": "https://maps.app.goo.gl/jkMkZu5rCBaLMiRn9", "lat": 36.352512939102624, "lng": 127.38877533942572, "note": "\"회전초밥\""}, {"area": "대전", "name": "걸작떡볶이", "google_map": "https://maps.app.goo.gl/n2h7kkrAVJ4eMqfb7", "lat": 36.337156651390046, "lng": 127.41922104681154, "note": "\"\""}, {"area": "대전", "name": "틈새라면", "google_map": "https://maps.app.goo.gl/iCD3UYi4PKCBw57P8", "lat": 36.33548312406187, "lng": 127.44428357463178, "note": "\"\""}, {"area": "서울_홍대", "name": "윤멘", "google_map": "https://maps.app.goo.gl/DPxheaUFCaq2oZAd9", "lat": 37.550370816623996, "lng": 126.90821368550728, "note": "\"합정 위치\""}, {"area": "서울_홍대", "name": "소바하우스 멘야준", "google_map": "https://maps.app.goo.gl/LXWNEpQfcdKRy8N17", "lat": 37.55998893819787, "lng": 126.92257977030673, "note": "\"연남 위치\""}, {"area": "부산_서면", "name": "나피라", "google_map": "https://maps.app.goo.gl/r65MKYea3Ao4Aoj89", "lat": 35.175361746357105, "lng": 129.0716191307827, "note": "\"\""}, {"area": "부산_서면", "name": "대쿠이", "google_map": "https://maps.app.goo.gl/WbpGVazfSFZP8V1D7", "lat": 35.15242166539482, "lng": 129.06314485657995, "note": "\"\""}, {"area": "서울_홍대", "name": "스미비부타동", "google_map": "https://maps.app.goo.gl/wwtXxY4KXwSun8wK9", "lat": 37.55179711812042, "lng": 126.9182150695722, "note": "부타동 마제소바"}, {"area": "서울_홍대", "name": "류진", "google_map": "https://maps.app.goo.gl/P58jfkqU9CAFk2bN7", "lat": 37.557090266898435, "lng": 126.90705704714854, "note": "지로라멘. 호불호 갈릴 수 있으니 사전조사 필요"}, {"area": "서울_홍대", "name": "카와카츠", "google_map": "https://maps.app.goo.gl/EBmUySMxm2hENFNA6", "lat": 37.554827848262214, "lng": 126.91626698751578, "note": "돈까스 우동"}, {"area": "서울_홍대", "name": "하카타나카", "google_map": "https://maps.app.goo.gl/g1yayDcM9KiC533o8", "lat": 37.55511574873105, "lng": 126.9236748394721, "note": "난반 카라아게"}, {"area": "서울_홍대", "name": "라무라", "google_map": "https://maps.app.goo.gl/Z6Tz38CCBDGD4JvR7", "lat": 37.549973329877155, "lng": 126.90859842598051, "note": "라멘"}, {"area": "서울_홍대", "name": "오레노라멘", "google_map": "https://maps.app.goo.gl/JwgC7w6vZdRjCYdU6", "lat": 37.547412386504035, "lng": 126.9178108971443, "note": "라멘"}, {"area": "서울_홍대", "name": "마시타야", "google_map": "https://maps.app.goo.gl/MBPwsZpC4PMbM9e4A", "lat": 37.55488875460494, "lng": 126.92665211248982, "note": "라멘"}, {"area": "서울_홍대", "name": "비스트로큐슈", "google_map": "https://maps.app.goo.gl/8eJ44gMurJMqda8J6", "lat": 37.5543294113647, "lng": 126.9299459971447, "note": "야끼카레"}, {"area": "서울_홍대", "name": "우와", "google_map": "https://maps.app.goo.gl/wfKRAVNnMsUxUz9p6", "lat": 37.55202233374002, "lng": 126.9221193848162, "note": "야끼소바 오코노미야끼. 가격대 있고 대기 있음"}, {"area": "서울_홍대", "name": "부탄츄", "google_map": "https://maps.app.goo.gl/kim4xTtGFzSSBpui6", "lat": 37.5565616996648, "lng": 126.9267660836536, "note": "라멘 무난함"}, {"area": "서울_홍대", "name": "크레이지카츠", "google_map": "https://maps.app.goo.gl/toouJPpmMveM1H5E9", "lat": 37.550625497910296, "lng": 126.9096746106358, "note": "돈까스"}, {"area": "서울_홍대", "name": "라사", "google_map": "https://maps.app.goo.gl/gJK6uujbxusQfcNXA", "lat": 37.55156000746691, "lng": 126.90781381248979, "note": "커리. 양 많고 이국적. 고수 향 잘 씀"}, {"area": "서울_홍대", "name": "모미모미", "google_map": "https://maps.app.goo.gl/Pkctt66uhc6nCX1GA", "lat": 37.55530748668759, "lng": 126.92898812598095, "note": "사케동 외 무난함"}, {"area": "서울_홍대", "name": "세상끝의라멘", "google_map": "https://maps.app.goo.gl/bDdJtayGJ9QTPPjp8", "lat": 37.55169358946864, "lng": 126.91521979714452, "note": "라멘 무난함"}, {"area": "서울_홍대", "name": "무야호랜드", "google_map": "https://maps.app.goo.gl/PXQbdkDHUnUMYwe48", "lat": 37.556240205911756, "lng": 126.92393515296335, "note": "야키니쿠. 고기랑 술 먹기 좋음. 가격대 있음"}, {"area": "서울_홍대", "name": "멘타카무쇼", "google_map": "https://place.map.kakao.com/1380652585", "lat": 37.55157686027552, "lng": 126.9238160259808, "note": "라멘 (위치 이전 확인 필요)"}, {"area": "서울_홍대", "name": "최강금돈까스", "google_map": "https://maps.app.goo.gl/NFeS3E8qh5DVVz827", "lat": 37.550025881134786, "lng": 126.91095901248953, "note": "합정 돈까스 맛집"}, {"area": "서울_홍대", "name": "하쿠텐", "google_map": "https://maps.app.goo.gl/CJKvy6XA18SUQss17", "lat": 37.56297315453148, "lng": 126.92583585481769, "note": "연남동 이에케라멘 맛집"}, {"area": "서울_홍대", "name": "무겐스위치", "google_map": "https://maps.app.goo.gl/z2GHoaGt36VTaQNh9", "lat": 37.56158670968809, "lng": 126.92520364132635, "note": "연남동 이에케라멘 맛집"}, {"area": "서울_홍대", "name": "나랑가", "google_map": "https://maps.app.goo.gl/XiQn2v21hzY9amWs8", "lat": 37.560238374867026, "lng": 126.91562823947231, "note": "초밥 일식"}, {"area": "서울_홍대", "name": "담택", "google_map": "https://maps.app.goo.gl/zh3jPc7zzPEoGf8n6", "lat": 37.55462336060158, "lng": 126.91513912598091, "note": "라멘"}, {"area": "서울_홍대", "name": "사루카메", "google_map": "https://maps.app.goo.gl/JV9jiCVoqSK2vLBx8", "lat": 37.56126070117364, "lng": 126.92267739714501, "note": "라멘"}, {"area": "서울_홍대", "name": "이스트사이드치킨샌드위치", "google_map": "https://maps.app.goo.gl/NHTMdavqvgCy45yK9", "lat": 37.56020251427054, "lng": 126.92152955481745, "note": "버거"}, {"area": "서울_홍대", "name": "더리얼치즈버거", "google_map": "https://maps.app.goo.gl/gZsPSWHMre1deHtn9", "lat": 37.55646811060288, "lng": 126.92771296830843, "note": "버거"}, {"area": "서울_홍대", "name": "버거리", "google_map": "https://maps.app.goo.gl/RyrkQJ6aWLsDTikz6", "lat": 37.55616506967784, "lng": 126.9237139591861, "note": "버거"}, {"area": "서울_홍대", "name": "무쏘", "google_map": "https://maps.app.goo.gl/V2CkBPQEaVHiWKeD9", "lat": 37.556314973565506, "lng": 126.92441455481737, "note": "소고기 무한리필. 육회 새우 리필 제한 확인 필요"}, {"area": "서울_홍대", "name": "김덕후의곱창조", "google_map": "https://maps.app.goo.gl/aiSpcB51RayPSkpG9", "lat": 37.54936821044298, "lng": 126.92248162891694, "note": "유명한 곱창집"}, {"area": "서울_홍대", "name": "평안도상원냉면", "google_map": "https://maps.app.goo.gl/DBoMXy9MsbQPtv5r5", "lat": 37.55627219509596, "lng": 126.92338210878202, "note": "평양냉면"}, {"area": "서울_홍대", "name": "피자몰(신촌점)", "google_map": "https://maps.app.goo.gl/3uJVwu8zFR61yRvP8", "lat": 37.555127187119844, "lng": 126.93606599714467, "note": "피자뷔페. 사이드 메뉴 추천"}, {"area": "서울_홍대", "name": "썬키친", "google_map": "https://maps.app.goo.gl/s6iPi613RbjeXXxj9", "lat": 37.54888243311429, "lng": 126.91692235296323, "note": "양식"}, {"area": "서울_홍대", "name": "진진", "google_map": "https://maps.app.goo.gl/ze9RVDwjBK2YG3Er7", "lat": 37.554089190559694, "lng": 126.91840481357184, "note": "미슐랭 1스타 중식. 멘보샤 추천. 짜장면 없음"}, {"area": "서울_홍대", "name": "티에리스티라운지", "google_map": "https://maps.app.goo.gl/wpbDJQ9ZBYDTawRa6", "lat": 37.548129216472915, "lng": 126.915654354817, "note": "경치 좋은 티라운지. 여의도 조망"}, {"area": "서울_홍대", "name": "클럽에반스", "google_map": "https://maps.app.goo.gl/ivPLE9p27Ydx1XdY7", "lat": 37.550473292254395, "lng": 126.9229751259808, "note": "재즈클럽"}, {"area": "서울", "name": "루나아시아", "google_map": "https://maps.app.goo.gl/pNEZBAqhP6wrYXbR9", "lat": 37.51003489515548, "lng": 127.05661509714301, "note": "인도요리 (삼성역)"}, {"area": "서울", "name": "킹케밥 포스코센터점", "google_map": "https://maps.app.goo.gl/HrJhbtCRGXFSdP9M6", "lat": 37.51424697525992, "lng": 127.05612310516135, "note": "터키음식 (삼성역)"}, {"area": "서울", "name": "허머스키친 삼성점", "google_map": "https://maps.app.goo.gl/sLPvSuyVVj8nUkP27", "lat": 37.509632781589076, "lng": 127.06170529714305, "note": "중동음식 (코엑스)"}, {"area": "서울", "name": "중앙해장", "google_map": "https://maps.app.goo.gl/eJZCq5wAcAU1K7VV7", "lat": 37.50848358805979, "lng": 127.06545706830671, "note": "해장국 (삼성역)"}, {"area": "서울", "name": "풀향기", "google_map": "https://maps.app.goo.gl/HvLdiqDSpT6B1wzv9", "lat": 37.51065950048279, "lng": 127.06278182706303, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "밥스키친", "google_map": "https://maps.app.goo.gl/7Cu5HAQZAtNzrLvW6", "lat": 37.508864519495255, "lng": 127.05829058179798, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "삼백플러스", "google_map": "https://maps.app.goo.gl/GYX9jPh6riYdzXsMA", "lat": 37.507222390936064, "lng": 127.05616728550544, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "하동관 코엑스점", "google_map": "https://maps.app.goo.gl/7PHBHWBkBBbunQkJ8", "lat": 37.51129996066095, "lng": 127.05989650270476, "note": "곰탕 (코엑스)"}, {"area": "서울", "name": "보노보노플러스 삼성점", "google_map": "https://maps.app.goo.gl/UuS9M8Xtpr3Ek2og6", "lat": 37.50701960237581, "lng": 127.05814741248795, "note": "해산물뷔페"}, {"area": "서울", "name": "도명골청국장", "google_map": "https://maps.app.goo.gl/2n6PGxFwi1hGg48SA", "lat": 37.51286956056727, "lng": 127.06540555481547, "note": "한식"}, {"area": "서울", "name": "시추안하우스", "google_map": "https://maps.app.goo.gl/hw5zDgDLfeKNsmLm8", "lat": 37.51540673991247, "lng": 127.06027373914439, "note": "중화요리"}, {"area": "서울", "name": "팀호완", "google_map": "https://maps.app.goo.gl/eQLKDZdoY7Q7HbTz8", "lat": 37.516711094531715, "lng": 127.05855699445085, "note": "중화요리"}, {"area": "서울", "name": "비야게레로", "google_map": "https://maps.app.goo.gl/JX4C1YHC9oRdAcUJ7", "lat": 37.51211595898596, "lng": 127.05282711248829, "note": "타코 맛집 (삼성중앙역)"}, {"area": "서울", "name": "크라이치즈버거 삼성역점", "google_map": "https://maps.app.goo.gl/42cfFwibbVkPP4FJ8", "lat": 37.509221486376966, "lng": 127.06525421063405, "note": "버거. 애니멀스타일 추가 추천"}, {"area": "서울", "name": "부타이 1막", "google_map": "https://maps.app.goo.gl/X4FYguosG1DKhSPY9", "lat": 37.5063815260069, "lng": 127.06010677016036, "note": "돈까스. 카츠산도 추천"}, {"area": "서울", "name": "후레쉬빌", "google_map": "https://maps.app.goo.gl/Nv6WiG6h9mtAf2or6", "lat": 37.50839656662037, "lng": 127.06618683761656, "note": "돈까스 오므라이스 추천"}];
+            // 파이썬에서 주입된 데이터
+            const data = [{"area": "서울", "name": "롯데리아", "google_map": "https://maps.app.goo.gl/HosPLur1cJ6X5sr78", "lat": 37.53654256543878, "lng": 127.09552764449447, "note": ""}, {"area": "대전", "name": "성심당 본점", "google_map": "https://maps.app.goo.gl/HoaxCu8tb3TiAqan6", "lat": 36.327847400657774, "lng": 127.42732093942494, "note": "빵 맛잇고 가성비잇음. 은행동 위치. 본점 위층에 테라스키친(식사) 있음"}, {"area": "대전", "name": "성심당 대전역점", "google_map": "https://maps.app.goo.gl/5jhjNyeuKz5G546aA", "lat": 36.332474820174184, "lng": 127.43371337011524, "note": "대전역 2층 대합실 위치. 기차 타기 전 들르기 좋음"}, {"area": "대전", "name": "성심당 롯데백화점 대전점", "google_map": "https://maps.app.goo.gl/af3PrVyVXyAqPLsw9", "lat": 36.34057268479398, "lng": 127.39023004127927, "note": "롯데백화점 1층 위치. 백화점 전용 메뉴가 따로 있음"}, {"area": "대전", "name": "성심당 DCC점", "google_map": "https://maps.app.goo.gl/iowUxA7Lxt3U9SaS6", "lat": 36.37551267674989, "lng": 127.39240996826295, "note": "대전컨벤션센터 위치. 유성구 쪽에서 가기 좋음"}, {"area": "대전", "name": "성심당 케익부띠끄", "google_map": "https://maps.app.goo.gl/ktWnWhs8DBRQ3PeF9", "lat": 36.33355140583163, "lng": 127.42743660252076, "note": "케이크 및 디저트 전문. 본점 입구 근처 위치"}, {"area": "대전", "name": "성심당 옛맛솜씨", "google_map": "https://maps.app.goo.gl/b4LhEEHLFCbg3mVc6", "lat": 36.327739662588186, "lng": 127.42746302778757, "note": "전통 과자 및 답례품 전문. 본점 근처 위치"}, {"area": "대전", "name": "성심당 문화원", "google_map": "https://maps.app.goo.gl/XE4JUy3pycGCJfaz7", "lat": 36.32724330193117, "lng": 127.42737403942485, "note": "굿즈 판매 및 전시 공간. 쉼터로 좋음"}, {"area": "대전", "name": "오문창순대국밥", "google_map": "https://maps.app.goo.gl/PCvbrhjFPmyQhEHF7", "lat": 36.35942813406155, "lng": 127.42659419709878, "note": "\"대전터미널 근처 위치\""}, {"area": "서울_홍대", "name": "카츠와", "google_map": "https://maps.app.goo.gl/8Ry2eJwm4zeVE7kYA", "lat": 37.55544969725542, "lng": 126.92701645481728, "note": "\"맛있던데\""}, {"area": "부산_서면", "name": "교자쇼푸", "google_map": "https://maps.app.goo.gl/igYC1Zm5Gx6tG6tT9", "lat": 35.15895161617535, "lng": 129.06351061054482, "note": "\"마파두부 맛있더라\""}, {"area": "요코하마", "name": "요시무라야", "google_map": "https://maps.app.goo.gl/cZjiQj1a2R85zEn68", "lat": 35.4631847045806, "lng": 139.6151070835739, "note": "\"아직 안가봄! 이에케라멘 총본산\""}, {"area": "부산_서면", "name": "국밥골목", "google_map": "https://maps.app.goo.gl/pUCAXzDCcvQ2JX3HA", "lat": 35.155868949482944, "lng": 129.05819858356253, "note": "\"서면시장 위치\""}, {"area": "서울_홍대", "name": "온정", "google_map": "https://maps.app.goo.gl/69G7NaKButZghqr48", "lat": 37.56282294562447, "lng": 126.9255017529638, "note": "\"(돈부리 사케동 등) / 가성비 그럭저럭(12"}, {"area": "대전", "name": "농민순대", "google_map": "https://maps.app.goo.gl/C5bfRJwUvn8vmD2R8", "lat": 36.31927755238408, "lng": 127.43183373942456, "note": "\"6000원이라는 싼마이 가격에 맛있는 순대국밥집임. 대전에서 유명하긴한데 솔직히 그정돈가임 난\""}, {"area": "대전", "name": "태평소국밥", "google_map": "태평소국밥", "lat": 36.33396842892469, "lng": 127.39890683018695, "note": "\"소국밥 마시써요. 가격도 착함\""}, {"area": "대전", "name": "오씨칼국수", "google_map": "https://maps.app.goo.gl/RrJnE7n7dHZL3Aed6", "lat": 36.34217163851787, "lng": 127.42537937567727, "note": "\"\""}, {"area": "대전", "name": "태화장", "google_map": "https://maps.app.goo.gl/JdETEU8UMSAvxA5M8", "lat": 36.33396053024255, "lng": 127.42958650265949, "note": "\"\""}, {"area": "대전", "name": "요우란", "google_map": "https://maps.app.goo.gl/R8uw6fsHR6FpRtey7", "lat": 36.327020571322606, "lng": 127.41873019524347, "note": "\"\""}, {"area": "부산_서면", "name": "발해양꼬치", "google_map": "https://maps.app.goo.gl/3jQ7WuvsoNuHVq8A6", "lat": 35.15501482593996, "lng": 129.05710772774373, "note": "\"\""}, {"area": "부산_서면", "name": "본가밀면", "google_map": "https://maps.app.goo.gl/xgzMBaTJPGmqSEtS9", "lat": 35.15625859234756, "lng": 129.05867334308903, "note": "\"\""}, {"area": "부산_서면", "name": "스스키노", "google_map": "https://maps.app.goo.gl/18uH5ZHWkR9VGL3d9", "lat": 35.15762519107269, "lng": 129.06416857007125, "note": "\"\""}, {"area": "부산_서면", "name": "부부손칼국수", "google_map": "https://maps.app.goo.gl/ZwyVEqK1uu6WHoej8", "lat": 35.14883381522473, "lng": 129.06113506963243, "note": "\"서면 안 가고 완전 근처에서 먹고 싶다 하면 나쁘지 않음\""}, {"area": "요코하마", "name": "토리키조쿠", "google_map": "https://maps.app.goo.gl/7f2sJHoNCqAmbpEv5", "lat": 35.47099528696473, "lng": 139.62319912865485, "note": "\"\""}, {"area": "요코하마", "name": "바미얀", "google_map": "https://maps.app.goo.gl/PPawwd5PCCKmtemi9", "lat": 35.4630545457741, "lng": 139.6295046034867, "note": "\"\""}, {"area": "부산_서면", "name": "치킨버거클럽", "google_map": "https://maps.app.goo.gl/DREr5nbocBYdcPa78", "lat": 35.15273216442385, "lng": 129.0662586682172, "note": "\"서면cgv 나름 가까움\""}, {"area": "부산_서면", "name": "와일드캣브루잉", "google_map": "https://maps.app.goo.gl/xCFKvUpdzW49X49BA", "lat": 35.15097967434297, "lng": 129.05861819705353, "note": "\"우치아게 ㄱㄱ\""}, {"area": "부산_서면", "name": "커피샬롱루이", "google_map": "https://maps.app.goo.gl/4fnpG2i1jQHBzB6S8", "lat": 35.152307099003785, "lng": 129.06285048473558, "note": "\"홍차 마시는거 좋아하면 ㄱㄱ\""}, {"area": "부산_서면", "name": "복동이네오지상", "google_map": "https://maps.app.goo.gl/EzbTd4JtaVMX4n8VA", "lat": 35.160006799512516, "lng": 129.06151703938124, "note": "\"니보시라멘 맛있음. 좀 짭짤할 수 있고 웨이팅 있을 수 있음. 여기 니보시 향좀 세니깐 해산물 잘못먹으면 피해\""}, {"area": "대구", "name": "모루", "google_map": "https://maps.app.goo.gl/UwtfQsmiqy2h6SYh6", "lat": 35.87725027957315, "lng": 128.63053671357181, "note": "\"카이센동 스키야키 등 일본 정식. 가격대 있지만 맛 보장\""}, {"area": "대구", "name": "효목골막창", "google_map": "https://maps.app.goo.gl/cNUKbrEG4393AktH8", "lat": 35.876031661054, "lng": 128.63932056824413, "note": "\"20년 전통 맛집\""}, {"area": "서울_홍대", "name": "로쏘 1924", "google_map": "https://maps.app.goo.gl/ho7hfjq7hZyBqUe38", "lat": 37.554774693495574, "lng": 126.92165035296335, "note": "\"피자\""}, {"area": "요코하마", "name": "らーめんせんだい横浜駅西口店", "google_map": "https://maps.app.goo.gl/eJ2ezjv253CY2P97A", "lat": 35.467153820188, "lng": 139.61892546822884, "note": "\"요코하마역 서구점. 매장 좁고 많음\""}, {"area": "요코하마", "name": "花より、ハンバーグ本店", "google_map": "https://maps.app.goo.gl/QEqdj13XHtz92JxLA", "lat": 35.46839953553438, "lng": 139.62293675473774, "note": "\"나름 괜찮았음\""}, {"area": "서울_홍대", "name": "쿄라멘", "google_map": "https://maps.app.goo.gl/7nm71WaambAoP2cH9", "lat": 37.562543915823454, "lng": 126.92608852412735, "note": "\"가성비 ㅆㅅㅌㅊ 존나 맛있음. 주말 웨이팅 빡셈\""}, {"area": "요코하마", "name": "차이나타운", "google_map": "https://maps.app.goo.gl/rbnfVux2vMwZz1mR7", "lat": 35.44319316094814, "lng": 139.64413228357319, "note": "\"마파두부 샤오롱바오 맛도리. 향신료 향 강함"}, {"area": "대구", "name": "키라키라찜닭", "google_map": "https://maps.app.goo.gl/dHGUYBLvbT28yPs9A", "lat": 35.88202958503526, "lng": 128.58291009337293, "note": "\"CGV 근처 벚꽃길 동네 맛집. 가성비 좋음\""}, {"area": "대구", "name": "청양궁양꼬치", "google_map": "https://maps.app.goo.gl/oHWSCEVfudUrbCqR6", "lat": 35.881280722766704, "lng": 128.58202299708068, "note": "\"볶음밥 마파두부 꿔바로우 맛있음\""}, {"area": "대구", "name": "찬앤찬막창", "google_map": "https://maps.app.goo.gl/ATc1vsn2bamywVf18", "lat": 35.88775868620375, "lng": 128.57714842591716, "note": "\"유명한 막창집\""}, {"area": "대구", "name": "걸리버막창", "google_map": "https://maps.app.goo.gl/RzvThFxacSqE8Ep3A", "lat": 35.88667165713738, "lng": 128.5806714937436, "note": "\"유명한 막창집\""}, {"area": "대구", "name": "고굽남", "google_map": "https://maps.app.goo.gl/efHfZL7VPvRJUAcf7", "lat": 35.87538923873759, "lng": 128.58852587497444, "note": "\"고깃집\""}, {"area": "대구", "name": "만재네", "google_map": "https://maps.app.goo.gl/pnpUDRV57N4Wzop97", "lat": 35.869463290797576, "lng": 128.59224989522627, "note": "\"고깃집\""}, {"area": "대구", "name": "고성생고기", "google_map": "https://place.map.kakao.com/1459578727", "lat": 35.883696317198435, "lng": 128.5847664835896, "note": "\"뭉티기 먹을거면 추천\""}, {"area": "대구", "name": "만복국수집", "google_map": "https://maps.app.goo.gl/2k2PdoMKqMF15uWo6", "lat": 35.88616888160393, "lng": 128.585102497735, "note": "\"소주 한잔 땡기기 괜찮음\""}, {"area": "대구", "name": "선산곱창", "google_map": "https://maps.app.goo.gl/71evT7oVr988vTkQ7", "lat": 35.84228339116505, "lng": 128.53192667086256, "note": "\"\""}, {"area": "대구", "name": "자박갈비", "google_map": "https://maps.app.goo.gl/7bNQvfGE1uMx1k9a7", "lat": 35.8267065392697, "lng": 128.5217045943888, "note": "\"\""}, {"area": "대전", "name": "김화칼국수", "google_map": "https://maps.app.goo.gl/dD4542UPMw51JxpYA", "lat": 36.33221976391748, "lng": 127.43107472778787, "note": "\"\""}, {"area": "대전", "name": "개천식당", "google_map": "https://maps.app.goo.gl/fqDhrW4qedGTw6u7A", "lat": 36.32876037274542, "lng": 127.43154605291619, "note": "\"\""}, {"area": "대전", "name": "별난집", "google_map": "https://maps.app.goo.gl/cFg9BQzzjXYFbt1D9", "lat": 36.33110462351886, "lng": 127.43061023757119, "note": "\"\""}, {"area": "대전", "name": "진로집", "google_map": "https://maps.app.goo.gl/kyDYf8PcMBdoq92k7", "lat": 36.326042035875545, "lng": 127.42470348360625, "note": "\"\""}, {"area": "요코하마", "name": "シシリヤ", "google_map": "https://maps.app.goo.gl/WEPKUes2zSNrBQJTA", "lat": 35.44637230253761, "lng": 139.63921355288306, "note": "\"피자집. 마르게리타 추천\""}, {"area": "요코하마", "name": "伸喜", "google_map": "https://maps.app.goo.gl/diKYGYBwUmNnmMA89", "lat": 35.448208235494015, "lng": 139.6294384547369, "note": "\"야키토리\""}, {"area": "요코하마", "name": "アルペンジロー", "google_map": "https://maps.app.goo.gl/ypi5cakRMhMwSptE9", "lat": 35.43969760658018, "lng": 139.62855100870132, "note": "\"스프카레\""}, {"area": "요코하마", "name": "とんかつ 檍", "google_map": "https://maps.app.goo.gl/mUj2b2LXbwtH5Wmb6", "lat": 35.44898835687958, "lng": 139.6354817922334, "note": "\"돈카츠\""}, {"area": "요코하마", "name": "Kikuya Curry", "google_map": "https://maps.app.goo.gl/qukhxxetLxaABdVA8", "lat": 35.44866789498514, "lng": 139.62707284124585, "note": "\"카슈미르카레\""}, {"area": "부산_서면", "name": "기장손칼국수", "google_map": "https://maps.app.goo.gl/qU4xgwBcmFQ3qurm9", "lat": 35.155685024277545, "lng": 129.058342441235, "note": "\"\""}, {"area": "요코하마", "name": "레오나드", "google_map": "https://maps.app.goo.gl/dg7R9biiZxFtTC3i6", "lat": 35.4539904002934, "lng": 139.639182539392, "note": "\"도넛 간식. 하와이랑 요코하마에만 있음. 커스타드 필링 추천\""}, {"area": "서울", "name": "동서울칼국수", "google_map": "https://maps.app.goo.gl/TtXJ9FoVNVSJGJCG8", "lat": 37.5340293745322, "lng": 127.09132655481646, "note": "\"강변 도보 10분\""}, {"area": "대구", "name": "윤소인남산고단백장어죽집", "google_map": "https://maps.app.goo.gl/igGcA3aYknqLdz8R7", "lat": 35.877067512744304, "lng": 128.59560557086255, "note": "\"제육덮밥 6천원인데 왕돈까스 그릇에 담아줌. GOAT\""}, {"area": "요코하마", "name": "키친 조", "google_map": "https://maps.app.goo.gl/ZVgEQmRvxUd5r6RX8", "lat": 35.45116078875737, "lng": 139.63086035473722, "note": "\"나폴리탄 스파게티 치킨 커틀렛 토핑 추천\""}, {"area": "대전", "name": "후지산", "google_map": "https://maps.app.goo.gl/jkMkZu5rCBaLMiRn9", "lat": 36.352512939102624, "lng": 127.38877533942572, "note": "\"회전초밥\""}, {"area": "대전", "name": "걸작떡볶이", "google_map": "https://maps.app.goo.gl/n2h7kkrAVJ4eMqfb7", "lat": 36.337156651390046, "lng": 127.41922104681154, "note": "\"\""}, {"area": "대전", "name": "틈새라면", "google_map": "https://maps.app.goo.gl/iCD3UYi4PKCBw57P8", "lat": 36.33548312406187, "lng": 127.44428357463178, "note": "\"\""}, {"area": "서울_홍대", "name": "윤멘", "google_map": "https://maps.app.goo.gl/DPxheaUFCaq2oZAd9", "lat": 37.550370816623996, "lng": 126.90821368550728, "note": "\"합정 위치\""}, {"area": "서울_홍대", "name": "소바하우스 멘야준", "google_map": "https://maps.app.goo.gl/LXWNEpQfcdKRy8N17", "lat": 37.55998893819787, "lng": 126.92257977030673, "note": "\"연남 위치\""}, {"area": "부산_서면", "name": "나피라", "google_map": "https://maps.app.goo.gl/r65MKYea3Ao4Aoj89", "lat": 35.175361746357105, "lng": 129.0716191307827, "note": "\"\""}, {"area": "부산_서면", "name": "대쿠이", "google_map": "https://maps.app.goo.gl/WbpGVazfSFZP8V1D7", "lat": 35.15242166539482, "lng": 129.06314485657995, "note": "\"\""}, {"area": "서울_홍대", "name": "스미비부타동", "google_map": "https://maps.app.goo.gl/wwtXxY4KXwSun8wK9", "lat": 37.55179711812042, "lng": 126.9182150695722, "note": "부타동 마제소바"}, {"area": "서울_홍대", "name": "류진", "google_map": "https://maps.app.goo.gl/P58jfkqU9CAFk2bN7", "lat": 37.557090266898435, "lng": 126.90705704714854, "note": "지로라멘. 호불호 갈릴 수 있으니 사전조사 필요"}, {"area": "서울_홍대", "name": "카와카츠", "google_map": "https://maps.app.goo.gl/EBmUySMxm2hENFNA6", "lat": 37.554827848262214, "lng": 126.91626698751578, "note": "돈까스 우동"}, {"area": "서울_홍대", "name": "하카타나카", "google_map": "https://maps.app.goo.gl/g1yayDcM9KiC533o8", "lat": 37.55511574873105, "lng": 126.9236748394721, "note": "난반 카라아게"}, {"area": "서울_홍대", "name": "라무라", "google_map": "https://maps.app.goo.gl/Z6Tz38CCBDGD4JvR7", "lat": 37.549973329877155, "lng": 126.90859842598051, "note": "라멘"}, {"area": "서울_홍대", "name": "오레노라멘", "google_map": "https://maps.app.goo.gl/JwgC7w6vZdRjCYdU6", "lat": 37.547412386504035, "lng": 126.9178108971443, "note": "라멘"}, {"area": "서울_홍대", "name": "마시타야", "google_map": "https://maps.app.goo.gl/MBPwsZpC4PMbM9e4A", "lat": 37.55488875460494, "lng": 126.92665211248982, "note": "라멘"}, {"area": "서울_홍대", "name": "비스트로큐슈", "google_map": "https://maps.app.goo.gl/8eJ44gMurJMqda8J6", "lat": 37.5543294113647, "lng": 126.9299459971447, "note": "야끼카레"}, {"area": "서울_홍대", "name": "우와", "google_map": "https://maps.app.goo.gl/wfKRAVNnMsUxUz9p6", "lat": 37.55202233374002, "lng": 126.9221193848162, "note": "야끼소바 오코노미야끼. 가격대 있고 대기 있음"}, {"area": "서울_홍대", "name": "부탄츄", "google_map": "https://maps.app.goo.gl/kim4xTtGFzSSBpui6", "lat": 37.5565616996648, "lng": 126.9267660836536, "note": "라멘 무난함"}, {"area": "서울_홍대", "name": "크레이지카츠", "google_map": "https://maps.app.goo.gl/toouJPpmMveM1H5E9", "lat": 37.550625497910296, "lng": 126.9096746106358, "note": "돈까스"}, {"area": "서울_홍대", "name": "라사", "google_map": "https://maps.app.goo.gl/gJK6uujbxusQfcNXA", "lat": 37.55156000746691, "lng": 126.90781381248979, "note": "커리. 양 많고 이국적. 고수 향 잘 씀"}, {"area": "서울_홍대", "name": "모미모미", "google_map": "https://maps.app.goo.gl/Pkctt66uhc6nCX1GA", "lat": 37.55530748668759, "lng": 126.92898812598095, "note": "사케동 외 무난함"}, {"area": "서울_홍대", "name": "세상끝의라멘", "google_map": "https://maps.app.goo.gl/bDdJtayGJ9QTPPjp8", "lat": 37.55169358946864, "lng": 126.91521979714452, "note": "라멘 무난함"}, {"area": "서울_홍대", "name": "무야호랜드", "google_map": "https://maps.app.goo.gl/PXQbdkDHUnUMYwe48", "lat": 37.556240205911756, "lng": 126.92393515296335, "note": "야키니쿠. 고기랑 술 먹기 좋음. 가격대 있음"}, {"area": "서울_홍대", "name": "멘타카무쇼", "google_map": "https://place.map.kakao.com/1380652585", "lat": 37.55157686027552, "lng": 126.9238160259808, "note": "라멘 (위치 이전 확인 필요)"}, {"area": "서울_홍대", "name": "최강금돈까스", "google_map": "https://maps.app.goo.gl/NFeS3E8qh5DVVz827", "lat": 37.550025881134786, "lng": 126.91095901248953, "note": "합정 돈까스 맛집"}, {"area": "서울_홍대", "name": "하쿠텐", "google_map": "https://maps.app.goo.gl/CJKvy6XA18SUQss17", "lat": 37.56297315453148, "lng": 126.92583585481769, "note": "연남동 이에케라멘 맛집"}, {"area": "서울_홍대", "name": "무겐스위치", "google_map": "https://maps.app.goo.gl/z2GHoaGt36VTaQNh9", "lat": 37.56158670968809, "lng": 126.92520364132635, "note": "연남동 이에케라멘 맛집"}, {"area": "서울_홍대", "name": "나랑가", "google_map": "https://maps.app.goo.gl/XiQn2v21hzY9amWs8", "lat": 37.560238374867026, "lng": 126.91562823947231, "note": "초밥 일식"}, {"area": "서울_홍대", "name": "담택", "google_map": "https://maps.app.goo.gl/zh3jPc7zzPEoGf8n6", "lat": 37.55462336060158, "lng": 126.91513912598091, "note": "라멘"}, {"area": "서울_홍대", "name": "사루카메", "google_map": "https://maps.app.goo.gl/JV9jiCVoqSK2vLBx8", "lat": 37.56126070117364, "lng": 126.92267739714501, "note": "라멘"}, {"area": "서울_홍대", "name": "이스트사이드치킨샌드위치", "google_map": "https://maps.app.goo.gl/NHTMdavqvgCy45yK9", "lat": 37.56020251427054, "lng": 126.92152955481745, "note": "버거"}, {"area": "서울_홍대", "name": "더리얼치즈버거", "google_map": "https://maps.app.goo.gl/gZsPSWHMre1deHtn9", "lat": 37.55646811060288, "lng": 126.92771296830843, "note": "버거"}, {"area": "서울_홍대", "name": "버거리", "google_map": "https://maps.app.goo.gl/RyrkQJ6aWLsDTikz6", "lat": 37.55616506967784, "lng": 126.9237139591861, "note": "버거"}, {"area": "서울_홍대", "name": "무쏘", "google_map": "https://maps.app.goo.gl/V2CkBPQEaVHiWKeD9", "lat": 37.556314973565506, "lng": 126.92441455481737, "note": "소고기 무한리필. 육회 새우 리필 제한 확인 필요"}, {"area": "서울_홍대", "name": "김덕후의곱창조", "google_map": "https://maps.app.goo.gl/aiSpcB51RayPSkpG9", "lat": 37.54936821044298, "lng": 126.92248162891694, "note": "유명한 곱창집"}, {"area": "서울_홍대", "name": "평안도상원냉면", "google_map": "https://maps.app.goo.gl/DBoMXy9MsbQPtv5r5", "lat": 37.55627219509596, "lng": 126.92338210878202, "note": "평양냉면"}, {"area": "서울_홍대", "name": "피자몰(신촌점)", "google_map": "https://maps.app.goo.gl/3uJVwu8zFR61yRvP8", "lat": 37.555127187119844, "lng": 126.93606599714467, "note": "피자뷔페. 사이드 메뉴 추천"}, {"area": "서울_홍대", "name": "썬키친", "google_map": "https://maps.app.goo.gl/s6iPi613RbjeXXxj9", "lat": 37.54888243311429, "lng": 126.91692235296323, "note": "양식"}, {"area": "서울_홍대", "name": "진진", "google_map": "https://maps.app.goo.gl/ze9RVDwjBK2YG3Er7", "lat": 37.554089190559694, "lng": 126.91840481357184, "note": "미슐랭 1스타 중식. 멘보샤 추천. 짜장면 없음"}, {"area": "서울_홍대", "name": "티에리스티라운지", "google_map": "https://maps.app.goo.gl/wpbDJQ9ZBYDTawRa6", "lat": 37.548129216472915, "lng": 126.915654354817, "note": "경치 좋은 티라운지. 여의도 조망"}, {"area": "서울_홍대", "name": "클럽에반스", "google_map": "https://maps.app.goo.gl/ivPLE9p27Ydx1XdY7", "lat": 37.550473292254395, "lng": 126.9229751259808, "note": "재즈클럽"}, {"area": "서울", "name": "루나아시아", "google_map": "https://maps.app.goo.gl/pNEZBAqhP6wrYXbR9", "lat": 37.51003489515548, "lng": 127.05661509714301, "note": "인도요리 (삼성역)"}, {"area": "서울", "name": "킹케밥 포스코센터점", "google_map": "https://maps.app.goo.gl/HrJhbtCRGXFSdP9M6", "lat": 37.51424697525992, "lng": 127.05612310516135, "note": "터키음식 (삼성역)"}, {"area": "서울", "name": "허머스키친 삼성점", "google_map": "https://maps.app.goo.gl/sLPvSuyVVj8nUkP27", "lat": 37.509632781589076, "lng": 127.06170529714305, "note": "중동음식 (코엑스)"}, {"area": "서울", "name": "중앙해장", "google_map": "https://maps.app.goo.gl/eJZCq5wAcAU1K7VV7", "lat": 37.50848358805979, "lng": 127.06545706830671, "note": "해장국 (삼성역)"}, {"area": "서울", "name": "풀향기", "google_map": "https://maps.app.goo.gl/HvLdiqDSpT6B1wzv9", "lat": 37.51065950048279, "lng": 127.06278182706303, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "밥스키친", "google_map": "https://maps.app.goo.gl/7Cu5HAQZAtNzrLvW6", "lat": 37.508864519495255, "lng": 127.05829058179798, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "삼백플러스", "google_map": "https://maps.app.goo.gl/GYX9jPh6riYdzXsMA", "lat": 37.507222390936064, "lng": 127.05616728550544, "note": "한식뷔페 (삼성역)"}, {"area": "서울", "name": "하동관 코엑스점", "google_map": "https://maps.app.goo.gl/7PHBHWBkBBbunQkJ8", "lat": 37.51129996066095, "lng": 127.05989650270476, "note": "곰탕 (코엑스)"}, {"area": "서울", "name": "보노보노플러스 삼성점", "google_map": "https://maps.app.goo.gl/UuS9M8Xtpr3Ek2og6", "lat": 37.50701960237581, "lng": 127.05814741248795, "note": "해산물뷔페"}, {"area": "서울", "name": "도명골청국장", "google_map": "https://maps.app.goo.gl/2n6PGxFwi1hGg48SA", "lat": 37.51286956056727, "lng": 127.06540555481547, "note": "한식"}, {"area": "서울", "name": "시추안하우스", "google_map": "https://maps.app.goo.gl/hw5zDgDLfeKNsmLm8", "lat": 37.51540673991247, "lng": 127.06027373914439, "note": "중화요리"}, {"area": "서울", "name": "팀호완", "google_map": "https://maps.app.goo.gl/eQLKDZdoY7Q7HbTz8", "lat": 37.516711094531715, "lng": 127.05855699445085, "note": "중화요리"}, {"area": "서울", "name": "비야게레로", "google_map": "https://maps.app.goo.gl/JX4C1YHC9oRdAcUJ7", "lat": 37.51211595898596, "lng": 127.05282711248829, "note": "타코 맛집 (삼성중앙역)"}, {"area": "서울", "name": "크라이치즈버거 삼성역점", "google_map": "https://maps.app.goo.gl/42cfFwibbVkPP4FJ8", "lat": 37.509221486376966, "lng": 127.06525421063405, "note": "버거. 애니멀스타일 추가 추천"}, {"area": "서울", "name": "부타이 1막", "google_map": "https://maps.app.goo.gl/X4FYguosG1DKhSPY9", "lat": 37.5063815260069, "lng": 127.06010677016036, "note": "돈까스. 카츠산도 추천"}, {"area": "서울", "name": "후레쉬빌", "google_map": "https://maps.app.goo.gl/Nv6WiG6h9mtAf2or6", "lat": 37.50839656662037, "lng": 127.06618683761656, "note": "돈까스 오므라이스 추천"}];
+            
             let map;
             let markers = [];
             let currentArea = 'ALL';
+            let isMobile = window.innerWidth <= 768;
 
+            // 창 크기 변경 감지 (모바일전환 체크용)
+            window.addEventListener('resize', () => {
+                isMobile = window.innerWidth <= 768;
+            });
+
+            // --- 초기화 함수 ---
             function initMap() {
-                map = L.map('map').setView([36.5, 127.5], 7);
+                // 지도 중심점 초기 설정 (나중에 데이터 기반으로 재조정됨)
+                map = L.map('map', { zoomControl: false }).setView([36.5, 127.5], 7);
+                
+                // 줌 컨트롤 위치 조정
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                // 타일 레이어 설정 (OpenStreetMap)
+                // ** 수정됨: opacity: 0.7 추가로 지도 색상을 연하게 만듦 **
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OSM'
+                    attribution: '© OpenStreetMap contributors',
+                    opacity: 0.7, // 지도를 반투명하게 만들어 덜 진하게 보임 (0.0 ~ 1.0)
+                    maxZoom: 19
                 }).addTo(map);
             }
 
+            // --- 필터 버튼 생성 함수 ---
             function populateFilters() {
                 const container = document.getElementById('filters');
-                const areas = ['ALL', ...new Set(data.map(item => item.area))].filter(Boolean);
+                const areas = ['ALL', ...new Set(data.map(item => item.area))].filter(Boolean).sort();
                 
                 areas.forEach(area => {
                     const btn = document.createElement('button');
                     btn.className = 'filter-btn' + (area === 'ALL' ? ' active' : '');
-                    btn.textContent = area === 'ALL' ? '전체' : area;
+                    btn.textContent = area === 'ALL' ? '전체 보기' : area.replace('_', ' '); // 서울_홍대 -> 서울 홍대 보기 좋게
+                    
                     btn.onclick = () => {
+                        // 버튼 활성화 상태 변경
                         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
+                        
                         currentArea = area;
                         renderList();
                         renderMarkers();
@@ -92,76 +155,141 @@
                 });
             }
 
+            // --- 지도/네비 버튼 HTML 생성 함수 ---
             function getButtonsHtml(item) {
+                const query = encodeURIComponent(item.area.replace('_', ' ') + ' ' + item.name);
                 let html = '<div class="btn-group">';
-                if (item.google_map) html += `<a href="${item.google_map}" target="_blank" class="btn btn-google">Google</a>`;
-                html += `<a href="https://map.naver.com/p/search/${encodeURIComponent(item.area + ' ' + item.name)}" target="_blank" class="btn btn-naver">Naver</a>`;
-                html += `<a href="https://map.kakao.com/?q=${encodeURIComponent(item.area + ' ' + item.name)}" target="_blank" class="btn btn-kakao">Kakao</a>`;
+                
+                // 구글맵 링크가 있는 경우에만 표시, 없으면 검색 링크로 대체
+                if (item.google_map) {
+                    html += `<a href="${item.google_map}" target="_blank" class="btn btn-google">Google</a>`;
+                } else {
+                    html += `<a href="https://www.google.com/maps/search/?api=1&query=${query}" target="_blank" class="btn btn-google">Google 검색</a>`;
+                }
+                
+                html += `<a href="https://map.naver.com/p/search/${query}" target="_blank" class="btn btn-naver">Naver</a>`;
+                html += `<a href="https://map.kakao.com/link/search/${query}" target="_blank" class="btn btn-kakao">Kakao</a>`;
                 html += '</div>';
                 return html;
             }
 
+            // --- 리스트 렌더링 함수 ---
             function renderList() {
                 const container = document.getElementById('list-container');
-                container.innerHTML = '';
+                container.innerHTML = ''; // 기존 리스트 초기화
                 const filteredData = currentArea === 'ALL' ? data : data.filter(d => d.area === currentArea);
                 
+                if (filteredData.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">해당 구역에 맛집 데이터가 없습니다.</div>';
+                    return;
+                }
+
                 filteredData.forEach((item) => {
-                    const dataIndex = data.indexOf(item);
+                    const dataIndex = data.indexOf(item); // 원본 데이터에서의 인덱스
                     const div = document.createElement('div');
                     div.className = 'list-item';
                     div.id = `item-${dataIndex}`;
+                    
                     div.innerHTML = `
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-note">${item.note || ''}</div>
+                        <div class="item-header">
+                            <div class="item-name">${item.name}</div>
+                            <span class="item-area-badge">${item.area.replace('_', ' ')}</span>
+                        </div>
+                        <div class="item-note">${item.note || '(비고 없음)'}</div>
                         ${getButtonsHtml(item)}
                     `;
+                    
+                    // 리스트 아이템 클릭 이벤트
                     div.onclick = () => {
                         highlightItem(dataIndex);
+                        
                         if (item.lat && item.lng) {
-                            map.setView([item.lat, item.lng], 16);
-                            markers.find(m => m.itemIndex === dataIndex)?.marker.openPopup();
+                            // 지도 이동 및 마커 팝업 열기
+                            map.flyTo([item.lat, item.lng], 16, { duration: 0.5 });
+                            const targetMarker = markers.find(m => m.itemIndex === dataIndex);
+                            if (targetMarker) {
+                                targetMarker.marker.openPopup();
+                            }
+                            
+                            // 모바일에서는 지도 쪽으로 스크롤 이동
+                            if (isMobile) {
+                                document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+                            }
                         }
                     };
                     container.appendChild(div);
                 });
             }
 
+            // --- 마커 렌더링 함수 ---
             function renderMarkers() {
+                // 기존 마커 제거
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
+                
                 const filteredData = currentArea === 'ALL' ? data : data.filter(d => d.area === currentArea);
                 const bounds = L.latLngBounds();
-                let hasValid = false;
+                let hasValidCoords = false;
 
                 filteredData.forEach((item) => {
                     const dataIndex = data.indexOf(item);
-                    if (item.lat && item.lng) {
-                        hasValid = true;
+                    // 좌표가 유효한 경우에만 마커 생성
+                    if (item.lat !== null && item.lng !== null) {
+                        hasValidCoords = true;
                         const marker = L.marker([item.lat, item.lng]).addTo(map);
-                        marker.bindTooltip(item.name);
-                        marker.bindPopup(`<strong>${item.name}</strong><br>${getButtonsHtml(item)}`);
+                        
+                        // 마우스 오버 시 툴팁
+                        marker.bindTooltip(item.name, { direction: 'top', offset: [0, -20] });
+                        
+                        // 클릭 시 팝업 내용
+                        const popupContent = `
+                            <div style="min-width: 200px;">
+                                <h3 style="margin:0 0 5px 0; color:#E67E22;">${item.name}</h3>
+                                <p style="margin:0 0 10px 0; font-size:0.9rem; color:#666;">${item.note || ''}</p>
+                                ${getButtonsHtml(item)}
+                            </div>
+                        `;
+                        marker.bindPopup(popupContent);
+
+                        // 마커 클릭 이벤트
                         marker.on('click', () => {
                             highlightItem(dataIndex);
-                            const el = document.getElementById(`item-${dataIndex}`);
-                            if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // 해당 리스트 아이템으로 스크롤 이동
+                            const listItem = document.getElementById(`item-${dataIndex}`);
+                            if (listItem) {
+                                listItem.scrollIntoView({ behavior: 'smooth', block: isMobile ? 'start' : 'center' });
+                            }
                         });
+                        
                         markers.push({ marker, itemIndex: dataIndex });
                         bounds.extend([item.lat, item.lng]);
                     }
                 });
-                if (hasValid) map.fitBounds(bounds, { padding: [30, 30] });
+
+                // 마커가 존재하는 경우, 모든 마커가 보이도록 지도 영역핑 조정
+                if (hasValidCoords) {
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
+                } else if (filteredData.length > 0) {
+                     // 데이터는 있지만 좌표가 하나도 없는 경우 (예: 전체가 좌표 미상)
+                     // 기본 뷰 유지하거나 알림 표시 가능
+                }
             }
 
+            // --- 아이템 강조 표시 함수 ---
             function highlightItem(index) {
                 document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
-                document.getElementById(`item-${index}`)?.classList.add('active');
+                const target = document.getElementById(`item-${index}`);
+                if (target) {
+                    target.classList.add('active');
+                }
             }
 
+            // --- 실행 ---
             initMap();
             populateFilters();
             renderList();
             renderMarkers();
+
         </script>
     </body>
     </html>
