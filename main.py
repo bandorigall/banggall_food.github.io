@@ -4,7 +4,6 @@ import json
 def generate_html(csv_file, output_file):
     data = []
     
-    # CSV 데이터 읽기
     with open(csv_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -17,7 +16,6 @@ def generate_html(csv_file, output_file):
                 except ValueError:
                     pass
             
-            # 구역 이름 변환
             area = row['구역'].strip()
             if area == '홍대':
                 area = '서울_홍대'
@@ -33,7 +31,6 @@ def generate_html(csv_file, output_file):
                 'note': row['비고'].strip()
             })
 
-    # HTML 템플릿 생성
     html_content = f"""
     <!DOCTYPE html>
     <html lang="ko">
@@ -67,6 +64,13 @@ def generate_html(csv_file, output_file):
             .btn-kakao {{ background-color: #FEE500; color: #000; }}
             #map {{ flex: 1; }}
             footer {{ text-align: center; padding: 10px; background-color: #333; color: #FFF; font-size: 12px; }}
+
+            /* 모바일 반응형 CSS 추가 */
+            @media (max-width: 768px) {{
+                #main-container {{ flex-direction: column; }}
+                #sidebar {{ width: 100%; min-width: 100%; flex: 1; order: 2; border-right: none; }}
+                #map {{ width: 100%; height: 45vh; flex: none; order: 1; border-bottom: 2px solid #E0E0E0; z-index: 10; }}
+            }}
         </style>
     </head>
     <body>
@@ -177,7 +181,6 @@ def generate_html(csv_file, output_file):
                         hasValidCoords = true;
                         const marker = L.marker([item.lat, item.lng]).addTo(map);
                         
-                        // 툴팁(마우스 오버 시 이름 표시) 추가
                         marker.bindTooltip(item.name);
                         
                         marker.bindPopup(`
@@ -195,7 +198,6 @@ def generate_html(csv_file, output_file):
                     }}
                 }});
 
-                // 마커가 하나라도 있으면 전체가 보이도록 자동 조절
                 if (hasValidCoords) {{
                     map.fitBounds(bounds, {{ padding: [50, 50] }});
                 }}
@@ -219,7 +221,7 @@ def generate_html(csv_file, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-    print(f"작업 완료! {output_file} 파일이 생성되었습니다.")
+    print(f"작업 완료! {{output_file}} 파일 확장자 저장 완료!")
 
 if __name__ == "__main__":
     generate_html('data.csv', 'index.html')
