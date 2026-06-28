@@ -43,7 +43,8 @@ def generate_html(csv_file, output_file):
                     'google_map': row.get('구글맵링크', '').strip(),
                     'lat': lat,
                     'lng': lng,
-                    'note': row.get('비고', '').strip()
+                    'note': row.get('비고', '').strip(),
+                    'cat': row.get('분류', '').strip()
                 })
                 
     except Exception as e:
@@ -84,10 +85,16 @@ def generate_html(csv_file, output_file):
             #sidebar {{ width: 420px; min-width: 420px; background-color: #FAFAFA; border-right: 1px solid #E0E0E0; display: flex; flex-direction: column; overflow: hidden; z-index: 900; }}
             
             /* 필터 버튼 영역 */
-            #filters {{ padding: 10px; border-bottom: 1px solid #E0E0E0; background-color: #fff; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }}
+            #filters-wrap {{ border-bottom: 1px solid #E0E0E0; background-color: #fff; flex-shrink: 0; }}
+            .filter-row {{ padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }}
+            .filter-row + .filter-row {{ border-top: 1px dashed #eee; }}
+            .filter-label {{ font-size: 0.72rem; font-weight: 700; color: #aaa; margin-right: 2px; }}
             .filter-btn {{ padding: 6px 12px; border: 1px solid #ddd; border-radius: 20px; background-color: #f8f8f8; color: #666; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.85rem; }}
             .filter-btn:hover {{ background-color: #eee; }}
             .filter-btn.active {{ background-color: #FF9F43; color: white; border-color: #FF9F43; box-shadow: 0 2px 4px rgba(255, 159, 67, 0.3); }}
+            /* 카테고리 줄은 다른 색으로 구분 */
+            #filters-cat .filter-btn.active {{ background-color: #5A8DEE; border-color: #5A8DEE; box-shadow: 0 2px 4px rgba(90, 141, 238, 0.3); }}
+            .item-cat-badge {{ font-size: 0.75rem; background-color: #EAF1FF; padding: 3px 6px; border-radius: 4px; color: #5A8DEE; margin-left: 4px; }}
             
             /* 리스트 컨테이너 (스크롤 영역) */
             #list-container {{ flex: 1; overflow-y: auto; padding: 10px; -webkit-overflow-scrolling: touch; background-color: #f4f4f4; }}
@@ -150,8 +157,14 @@ def generate_html(csv_file, output_file):
         
         <div id="main-container">
             <div id="sidebar">
-                <div id="filters">
+                <div id="filters-wrap">
+                    <div id="filters" class="filter-row">
+                        <span class="filter-label">지역</span>
                     </div>
+                    <div id="filters-cat" class="filter-row">
+                        <span class="filter-label">종류</span>
+                    </div>
+                </div>
                 <div id="list-container">
                     </div>
             </div>
@@ -169,7 +182,16 @@ def generate_html(csv_file, output_file):
             let map;
             let markers = [];
             let currentArea = 'ALL';
+            let currentCat = 'ALL';
             let isMobile = window.innerWidth <= 768;
+
+            // 지역/종류 동시 필터링 (AND 조건)
+            function getFilteredData() {{
+                return data.filter(d =>
+                    (currentArea === 'ALL' || d.area === currentArea) &&
+                    (currentCat === 'ALL' || d.cat === currentCat)
+                );
+            }}
 
             window.addEventListener('resize', () => {{
                 isMobile = window.innerWidth <= 768;
@@ -187,23 +209,42 @@ def generate_html(csv_file, output_file):
             }}
 
             function populateFilters() {{
-                const container = document.getElementById('filters');
+                // 지역 필터
+                const areaContainer = document.getElementById('filters');
                 const areas = ['ALL', ...new Set(data.map(item => item.area))].filter(Boolean).sort();
-                
+
                 areas.forEach(area => {{
                     const btn = document.createElement('button');
                     btn.className = 'filter-btn' + (area === 'ALL' ? ' active' : '');
-                    btn.textContent = area === 'ALL' ? '전체 보기' : area.replace('_', ' ');
-                    
+                    btn.textContent = area === 'ALL' ? '전체' : area.replace('_', ' ');
+
                     btn.onclick = () => {{
-                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        areaContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
-                        
                         currentArea = area;
                         renderList();
                         renderMarkers();
                     }};
-                    container.appendChild(btn);
+                    areaContainer.appendChild(btn);
+                }});
+
+                // 종류(카테고리) 필터
+                const catContainer = document.getElementById('filters-cat');
+                const cats = ['ALL', ...new Set(data.map(item => item.cat))].filter(Boolean).sort();
+
+                cats.forEach(cat => {{
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-btn' + (cat === 'ALL' ? ' active' : '');
+                    btn.textContent = cat === 'ALL' ? '전체' : cat;
+
+                    btn.onclick = () => {{
+                        catContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentCat = cat;
+                        renderList();
+                        renderMarkers();
+                    }};
+                    catContainer.appendChild(btn);
                 }});
             }}
 
@@ -225,11 +266,11 @@ def generate_html(csv_file, output_file):
 
             function renderList() {{
                 const container = document.getElementById('list-container');
-                container.innerHTML = ''; 
-                const filteredData = currentArea === 'ALL' ? data : data.filter(d => d.area === currentArea);
-                
+                container.innerHTML = '';
+                const filteredData = getFilteredData();
+
                 if (filteredData.length === 0) {{
-                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">해당 구역에 맛집 데이터가 없습니다.</div>';
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">조건에 맞는 맛집이 없습니다.</div>';
                     return;
                 }}
 
@@ -242,7 +283,10 @@ def generate_html(csv_file, output_file):
                     div.innerHTML = `
                         <div class="item-header">
                             <div class="item-name">${{item.name}}</div>
-                            <span class="item-area-badge">${{item.area.replace('_', ' ')}}</span>
+                            <div>
+                                <span class="item-area-badge">${{item.area.replace('_', ' ')}}</span>
+                                ${{item.cat ? `<span class="item-cat-badge">${{item.cat}}</span>` : ''}}
+                            </div>
                         </div>
                         <div class="item-note">${{item.note || '(비고 없음)'}}</div>
                         ${{getButtonsHtml(item)}}
@@ -270,8 +314,8 @@ def generate_html(csv_file, output_file):
             function renderMarkers() {{
                 markers.forEach(m => map.removeLayer(m.marker));
                 markers = [];
-                
-                const filteredData = currentArea === 'ALL' ? data : data.filter(d => d.area === currentArea);
+
+                const filteredData = getFilteredData();
                 const bounds = L.latLngBounds();
                 let hasValidCoords = false;
 
