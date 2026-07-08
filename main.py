@@ -368,6 +368,7 @@ def generate_html(csv_file, output_file):
             renderMarkers();
 
         </script>
+    <script src="nav.js"></script>
     </body>
     </html>
     """
